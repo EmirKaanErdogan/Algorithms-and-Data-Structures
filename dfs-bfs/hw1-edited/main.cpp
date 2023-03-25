@@ -29,7 +29,6 @@ void print_out_grid(vector <vector<int> > my_vector){
         }
         cout<<endl ; 
     }
-    cout<<"***********************************"<<endl ;
 }
 double get_distance(int x1,int y1,int x2,int y2){
     return (pow(double(x1-x2),2)+pow(double(y1-y2),2)); 
@@ -116,7 +115,22 @@ vector<Kid*> read_file(string file_name,vector<vector<int> >&my_grid,int* source
     return kids; 
     
 }
-int min_passes(vector<vector<int> > grid,string* direction, int src, int target) {
+void print_parent_path(vector <int> parent_path,int src,int target){
+    vector <int> path; 
+    int current= target; 
+    while(current!=src){
+        path.push_back(current);
+        current=parent_path[current] ;
+    }
+    cout<<endl ;
+    cout<<path.size()<<" ";
+    cout<<src;
+    for(vector<int>::reverse_iterator i=path.rbegin(); i!=path.rend(); ++i){
+    cout<<"->"<<*i;
+    }
+    cout<<endl ;
+}
+int min_passes(vector<vector<int> > grid, int src, int target) {
     /*
     To find the shortest path using BFS the following steps are implemented.
     1) a queue for kids and an unordered set to prevent ambigous search which is initially set to false 
@@ -125,10 +139,10 @@ int min_passes(vector<vector<int> > grid,string* direction, int src, int target)
     and update the corresponding distance. The process should continue untill the distance of the target is achieved
 
     */
-    cout<<"The minimum Passes: "<<" "; 
     queue<int> search_queue;
     unordered_set<int> visited;
     vector<int> dist(grid.size(), -1);
+    vector<int> parent(grid.size(),-1); 
     // enqueue the source and set it as visited
     search_queue.push(src);
     visited.insert(src);
@@ -139,6 +153,7 @@ int min_passes(vector<vector<int> > grid,string* direction, int src, int target)
         int current_kid = search_queue.front();
         search_queue.pop();
         if (current_kid == target) { 
+            print_parent_path(parent,src,target); 
             return dist[target];
         }
         // control the neighbours&& the kids that the current kid can pass to.
@@ -150,6 +165,7 @@ int min_passes(vector<vector<int> > grid,string* direction, int src, int target)
                 search_queue.push(i);
                 // update the distance for the neighbour  
                 dist[i] = dist[current_kid] + 1; 
+                parent[i]=current_kid ;
             }
         }
     }
@@ -181,7 +197,8 @@ bool dfs(int u, int src, const vector<vector<int> >& adjMatrix, vector<int>& pat
                     }
                     return true;
                 }
-            } else if (parent[u] != v && v != src) {
+            }
+            else if (parent[u] != v && v != src) {
                 // Cycle found
                 int curr = u;
                 while (curr != v) {
@@ -198,7 +215,7 @@ bool dfs(int u, int src, const vector<vector<int> >& adjMatrix, vector<int>& pat
     return false;
 }
 
-void print_cycle(const vector<vector<int> >&grid,int source){
+void print_cycle_first(const vector<vector<int> >&grid,int source){
     vector <int>path; 
     unordered_set<int> visited; 
     vector <int> parent(grid.size(),-1);
@@ -216,6 +233,55 @@ void print_cycle(const vector<vector<int> >&grid,int source){
     }
 }
 
+bool is_cyclic(const vector<vector<int> >& adjMatrix, unordered_set<int>& visited, vector<int>& path, int parent, int current, int source) {
+    visited.insert(current);
+    for (int i = 0; i < adjMatrix.size(); i++) {
+        if (adjMatrix[current][i] == 1) {
+            if (visited.find(i) == visited.end()) {
+                if (is_cyclic(adjMatrix, visited, path, current, i, source)) {
+                    if (path.back() == source) { // cycle contains source node
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            else if (i != parent) {
+                path.push_back(i);
+                path.push_back(current);
+                if (path.back() == source) { // cycle contains source node
+                    return true;
+                }
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+void print_cycle(const vector<vector<int> >& grid, int source) {
+    vector<int> path;
+    unordered_set<int> visited;
+    int parent = -1;
+    if (is_cyclic(grid, visited, path, parent, source, source)) {
+        cout << "Cycle Found ! " << endl;
+        cout << source << "->";
+        for (int i = path.size() - 1; i >= 0; i--) {
+            /*
+            if (path[i] == source) {
+                cout << source << endl;
+                break;
+            }
+            */
+            cout << path[i] << "->";
+        }
+    }
+    else {
+        cout << "-1" << endl;
+        cout << "No cycle found ! " << endl;
+    }
+}
+
+
 int main(int argc,char** argv){
 
     /*
@@ -230,7 +296,6 @@ int main(int argc,char** argv){
     vector<vector<int> > my_grid; // adjacency matrix; 
     int* skidp=new int[1]; 
     int* tkidp=new int[1];
-    string* directionp; 
     vector <Kid*> my_vector= read_file(file_name,my_grid,skidp,tkidp);
     int source_kid= *skidp; 
     int target_kid = *tkidp ;
@@ -242,7 +307,8 @@ int main(int argc,char** argv){
     tkidp=nullptr; 
     my_vector[source_kid]->print_object();
     my_vector[target_kid]->print_object(); 
-    cout<<min_passes(my_grid,directionp,source_kid,target_kid)<<" "<<endl;
+    int minimum_passes=min_passes(my_grid,source_kid,target_kid);
+    cout<<"The minimum Passes: "<<minimum_passes<<endl;
     print_cycle(my_grid,source_kid);
     return 0 ; 
 }
