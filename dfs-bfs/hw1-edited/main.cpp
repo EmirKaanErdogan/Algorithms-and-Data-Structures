@@ -22,13 +22,58 @@
 
 using namespace std; 
 
-void print_out_grid(vector <vector<int> > my_vector){
-    for(int i=0;i<my_vector.size();i++){
-        for(int j=0;j<my_vector[0].size();j++){
-            cout<<my_vector[i][j]<<" "; 
-        }
-        cout<<endl ; 
+int write_graph(const vector <vector<int> >&adj_matrix){
+    ofstream outfile("graph.txt");
+    if(!outfile.is_open()){
+        cout<<"File cannot be opened !"<<endl ;
+        return EXIT_FAILURE; 
     }
+    outfile<< "Adjacency Matrix:"<<endl; 
+    cout<<"Adjacency Matrix"<<endl ; 
+    for(int i=0;i<adj_matrix.size();i++){
+        for(int j=0;j<adj_matrix[0].size();j++){
+            outfile<<adj_matrix[i][j]<<" ";
+            cout<<adj_matrix[i][j]<<" "; 
+        }
+        outfile<<endl ;
+        cout<<endl; 
+    }
+    outfile.close();
+    return EXIT_SUCCESS;
+}
+int write_bfs(vector<int>&path,int source){
+    ofstream outfile("bfs.txt");
+    if(!outfile.is_open()){
+        cout<<"File cannot be opened !"<<endl ;
+        return EXIT_FAILURE; 
+    }
+    outfile<<path.size()<<" ";
+    outfile<<source;
+    for(vector<int>::reverse_iterator i=path.rbegin(); i!=path.rend(); ++i){
+        outfile<<"->"<<*i;
+    }
+    outfile.close();
+
+    return EXIT_SUCCESS;
+}
+int write_cycle(vector<int>&path,int source,bool is_cyclic){
+    ofstream outfile("dfs.txt"); 
+    if(!outfile.is_open()){
+        cout<<"File cannot be opened !"<<endl ;
+        return EXIT_FAILURE;
+    }
+    if(!is_cyclic){
+        outfile<<"-1"; 
+        outfile.close();
+        return EXIT_SUCCESS;
+    }
+    outfile<<path.size()<<" ";
+    outfile<<source;
+    for(vector<int>::reverse_iterator i=path.rbegin(); i!=path.rend(); ++i){
+        outfile<<"->"<<*i;
+    }
+    outfile.close();
+    return EXIT_SUCCESS;
 }
 double get_distance(int x1,int y1,int x2,int y2){
     return (pow(double(x1-x2),2)+pow(double(y1-y2),2)); 
@@ -56,7 +101,7 @@ vector<vector<int> > create_grid(vector<Kid*> kids){
             }
         }
     }
-    print_out_grid(my_grid);
+    write_graph(my_grid);
     return my_grid; 
 }
 
@@ -124,6 +169,7 @@ void print_parent_path(vector <int> parent_path,int src,int target){
     }
     cout<<endl ;
     cout<<path.size()<<" ";
+    write_bfs(path,src); 
     cout<<src;
     for(vector<int>::reverse_iterator i=path.rbegin(); i!=path.rend(); ++i){
     cout<<"->"<<*i;
@@ -171,67 +217,7 @@ int min_passes(vector<vector<int> > grid, int src, int target) {
     }
     return -1; // target is not reachable from source
 }
-void print_out_cycle(vector<int> cycle){
-    for(int i=0;i<cycle.size();i++){
-        cout<<cycle[i]<<" "; 
-    }
-    cout<<endl ;
-}
 
-bool dfs(int u, int src, const vector<vector<int> >& adjMatrix, vector<int>& path, unordered_set<int>& visited, vector<int>& parent) {
-    visited.insert(u);
-    for (int v = 0; v < adjMatrix.size(); v++) {
-        if (adjMatrix[u][v] == 1) {
-            if (v == src && adjMatrix[src][u] == 1) {
-                path.push_back(u);
-                path.push_back(v);
-                return true;
-            }
-            if (visited.find(v) == visited.end()) {
-                parent[v] = u;
-                if (dfs(v, src, adjMatrix, path, visited, parent)) {
-                    if (u == src) {
-                        path.push_back(src);
-                    } else {
-                        path.push_back(u);
-                    }
-                    return true;
-                }
-            }
-            else if (parent[u] != v && v != src) {
-                // Cycle found
-                int curr = u;
-                while (curr != v) {
-                    path.push_back(curr);
-                    curr = parent[curr];
-                }
-                path.push_back(v);
-                path.push_back(u);
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-void print_cycle_first(const vector<vector<int> >&grid,int source){
-    vector <int>path; 
-    unordered_set<int> visited; 
-    vector <int> parent(grid.size(),-1);
-     
-    if(dfs(source,source,grid,path,visited,parent)){
-        cout<<"Cycle Found ! "<<endl; 
-        cout<<path.size()<<" "; 
-        for(int i=path.size();i>=0;i--){
-            cout<<path[i]<<"->"; 
-        }
-        cout<<endl;
-    } 
-    else{
-        cout<<"No cycle Found ! "<<endl ; 
-    }
-}
 
 bool is_cyclic(const vector<vector<int> >& adjMatrix, unordered_set<int>& visited, vector<int>& path, int parent, int current, int source) {
     visited.insert(current);
@@ -257,12 +243,12 @@ bool is_cyclic(const vector<vector<int> >& adjMatrix, unordered_set<int>& visite
     }
     return false;
 }
-
 void print_cycle(const vector<vector<int> >& grid, int source) {
     vector<int> path;
     unordered_set<int> visited;
     int parent = -1;
     if (is_cyclic(grid, visited, path, parent, source, source)) {
+        write_cycle(path,source,true);
         cout << "Cycle Found ! " << endl;
         cout << source << "->";
         for (int i = path.size() - 1; i >= 0; i--) {
@@ -276,6 +262,7 @@ void print_cycle(const vector<vector<int> >& grid, int source) {
         }
     }
     else {
+        write_cycle(path,source,false);
         cout << "-1" << endl;
         cout << "No cycle found ! " << endl;
     }
@@ -310,5 +297,6 @@ int main(int argc,char** argv){
     int minimum_passes=min_passes(my_grid,source_kid,target_kid);
     cout<<"The minimum Passes: "<<minimum_passes<<endl;
     print_cycle(my_grid,source_kid);
+    
     return 0 ; 
 }
