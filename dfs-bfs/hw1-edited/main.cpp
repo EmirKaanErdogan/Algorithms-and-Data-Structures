@@ -218,53 +218,45 @@ int min_passes(vector<vector<int> > grid, int src, int target) {
     return -1; // target is not reachable from source
 }
 
-
-bool is_cyclic(const vector<vector<int> >& adjMatrix, unordered_set<int>& visited, vector<int>& path, int parent, int current, int source) {
+bool dfs(int current, const int source,const vector<vector<int> >& grid, unordered_set<int>& visited, vector<int>& cycle_path){
+    cycle_path.push_back(current); 
     visited.insert(current);
-    for (int i = 0; i < adjMatrix.size(); i++) {
-        if (adjMatrix[current][i] == 1) {
-            if (visited.find(i) == visited.end()) {
-                if (is_cyclic(adjMatrix, visited, path, current, i, source)) {
-                    if (path.back() == source) { // cycle contains source node
-                        return true;
-                    }
-                    return false;
-                }
+    
+    if(grid[current][source]==1 && cycle_path.size()>2){
+        return true ; 
+    }
+    for(int i=0;i<grid.size();i++){
+        if(grid[current][i]==1){
+            if(grid[current][i]==source && cycle_path.size()>2){
+                return true; 
             }
-            else if (i != parent) {
-                path.push_back(i);
-                path.push_back(current);
-                if (path.back() == source) { // cycle contains source node
-                    return true;
+            if(visited.find(i)==visited.end()){
+                if(dfs(i,source,grid,visited,cycle_path)){
+                    return true; 
                 }
-                return false;
             }
         }
     }
-    return false;
+    cycle_path.pop_back();
+    return false; 
 }
-void print_cycle(const vector<vector<int> >& grid, int source) {
-    vector<int> path;
-    unordered_set<int> visited;
-    int parent = -1;
-    if (is_cyclic(grid, visited, path, parent, source, source)) {
-        write_cycle(path,source,true);
-        cout << "Cycle Found ! " << endl;
-        cout << source << "->";
-        for (int i = path.size() - 1; i >= 0; i--) {
-            /*
-            if (path[i] == source) {
-                cout << source << endl;
-                break;
-            }
-            */
-            cout << path[i] << "->";
+void print_cycle(const vector<vector<int> >& grid, const int source) {
+    vector<int> cycle_path; 
+    unordered_set<int> new_visited; 
+    if(dfs(source,source,grid,new_visited,cycle_path)){
+        write_cycle(cycle_path,source,true);
+        cout<<"Cycle Found ! "<<endl ;
+        cout<<cycle_path.size()<<" ";
+        cout<<source;
+        for(int i=cycle_path.size()-1;i>=0;i--){
+            cout<<"->"<<cycle_path[i];
         }
+        cout<<endl; 
     }
-    else {
-        write_cycle(path,source,false);
-        cout << "-1" << endl;
-        cout << "No cycle found ! " << endl;
+    else{
+        write_cycle(cycle_path,source,false);
+        cout<<"-1"<<endl ; 
+        cout<<"No cycle Found ! "<<endl ; 
     }
 }
 
