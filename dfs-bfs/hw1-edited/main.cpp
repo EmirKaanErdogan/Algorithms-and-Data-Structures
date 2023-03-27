@@ -19,7 +19,7 @@
 #include <stack>
 #include <unordered_set>
 #include "kid.h"
-#include "write_file.cpp"
+#include "write_file.h"
 using namespace std; 
 
 
