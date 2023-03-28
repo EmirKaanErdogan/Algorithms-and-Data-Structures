@@ -18,7 +18,7 @@
 #include <queue>
 #include <stack>
 #include <unordered_set>
-
+#include <time.h>
 using namespace std; 
 
 class Kid{
@@ -75,10 +75,10 @@ int write_graph(const vector <vector<int> >&adj_matrix){
         cout<<"File cannot be opened !"<<endl ;
         return EXIT_FAILURE; 
     }
-    outfile<< "Adjacency Matrix:"<<endl; 
+    outfile<< "Graph:"<<endl; 
     cout<<"Adjacency Matrix"<<endl ; 
-    for(int i=0;i<adj_matrix.size();i++){
-        for(int j=0;j<adj_matrix[0].size();j++){
+    for(size_t i=0;i<adj_matrix.size();i++){
+        for(size_t j=0;j<adj_matrix[0].size();j++){
             outfile<<adj_matrix[i][j]<<" ";
             cout<<adj_matrix[i][j]<<" "; 
         }
@@ -111,14 +111,14 @@ int write_cycle(vector<int>&path,int source,bool is_cyclic){
         cout<<"File cannot be opened !"<<endl ;
         return EXIT_FAILURE;
     }
-    outfile<<"DFS"<<endl ;
+    outfile<<"DFS:"<<endl ;
     if(!is_cyclic){
         outfile<<"-1"; 
         outfile.close();
         return EXIT_SUCCESS;
     }
     outfile<<path.size()<<" ";
-    for(int i=0;i<path.size();i++){
+    for(size_t i=0;i<path.size();i++){
         outfile<<path[i]<<"->";
     }
     outfile<<source;
@@ -141,8 +141,8 @@ vector<vector<int> > create_grid(vector<Kid*> kids){
     vector <vector<int> > my_grid(kids.size(),vector<int>(kids.size()));
     //cout<<my_grid.size()<<","<<my_grid[0].size()<<endl ; 
     //print_out_grid(my_grid);
-    for(int i=0;i<my_grid.size();i++){
-        for(int j=0;j<my_grid[0].size();j++){
+    for(size_t i=0;i<my_grid.size();i++){
+        for(size_t j=0;j<my_grid[0].size();j++){
             if(i!=j){
                 if(is_reachable(kids[i],kids[j])){
                     my_grid[i][j]=1;
@@ -158,7 +158,7 @@ vector<vector<int> > create_grid(vector<Kid*> kids){
 
 vector<Kid*> read_file(string file_name,vector<vector<int> >&my_grid,int* source_kid,int* target_kid){
     vector <Kid*> kids ; 
-    int num_kids; 
+    //int num_kids; 
     int num; 
     int row_counter=0 ;
     ifstream input_file(file_name);
@@ -254,7 +254,7 @@ int min_passes(vector<vector<int> > grid, int src, int target) {
             return dist[target];
         }
         // control the neighbours&& the kids that the current kid can pass to.
-        for (int i = 0; i < grid[current_kid].size(); i++) {
+        for (size_t i = 0; i < grid[current_kid].size(); i++) {
             // the neighbouring kid should be reachable and has not been visited yet; 
             if (grid[current_kid][i] == 1 && visited.find(i) == visited.end()) {
                 // mark the kid as visited and enqueue it
@@ -276,7 +276,7 @@ bool dfs(int current, const int source,const vector<vector<int> >& grid, unorder
     if(grid[current][source]==1 && cycle_path.size()>2){
         return true ; 
     }
-    for(int i=0;i<grid.size();i++){
+    for(size_t i=0;i<grid.size();i++){
         if(grid[current][i]==1){
             if(grid[current][i]==source && cycle_path.size()>2){
                 return true; 
@@ -299,7 +299,7 @@ void print_cycle(const vector<vector<int> >& grid, const int source) {
         write_cycle(cycle_path,source,true);
         cout<<"Cycle Found ! "<<endl ;
         cout<<cycle_path.size()<<" ";
-        for(int i=0;i<cycle_path.size();i++){
+        for(size_t i=0;i<cycle_path.size();i++){
             cout<<cycle_path[i]<<"->";
         }
         cout<<source;
@@ -322,6 +322,7 @@ int main(int argc,char** argv){
         Expected output: graph.txt bfs.txt dfs.txt
         Please, try to write clean and readable code. Remember to comment!!
     */
+    clock_t start,end ;
     string file_name=argv[1];
     vector<vector<int> > my_grid; // adjacency matrix; 
     int* skidp=new int[1]; 
@@ -337,9 +338,16 @@ int main(int argc,char** argv){
     tkidp=nullptr; 
     my_vector[source_kid]->print_object();
     my_vector[target_kid]->print_object(); 
+    start=clock();
     int minimum_passes=min_passes(my_grid,source_kid,target_kid);
     cout<<"The minimum Passes: "<<minimum_passes<<endl;
+    end=clock();
+    double elapsed1= (double)(end-start)/CLOCKS_PER_SEC ;
+    cout<<"BFS Run Time: "<<elapsed1<<" ms"<<endl; 
+    start=clock();
     print_cycle(my_grid,source_kid);
-    
+    end=clock();
+    double elapsed2= (double)(end-start)/CLOCKS_PER_SEC ;
+    cout<<"DFS Run Time: "<<elapsed2<<" ms"<<endl;
     return 0 ; 
 }
